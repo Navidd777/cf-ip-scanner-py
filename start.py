@@ -149,8 +149,7 @@ def main():
                 api_key = input(f"Cloudflare Global API Key [{default_api_key}]: ") or default_api_key
 
             # Prompt user to enter subdomain to modify
-            #subdomain = input(f"Subdomain to modify (i.e ip.my-domain.com) [{default_subdomain}]: ") or default_subdomain
-
+            
 
             # Check if provided credentials are correct and retry if they are not
             while not validateCloudflareCredentials(email, api_key, zone_id, subdomain):
@@ -164,7 +163,7 @@ def main():
                     email = input(f"Cloudflare email [{default_email}]: ") or default_email
                     zone_id = input(f"Cloudflare zone ID [{default_zone_id}]: ") or default_zone_id
                     api_key = input(f"Cloudflare Global API Key [{default_api_key}]: ") or default_api_key
-             #   subdomain = input(f"Subdomain to modify (i.e ip.my-domain.com) [{default_subdomain}]: ") or default_subdomain
+             
 
 
         # Update config variable with given data from user
@@ -203,23 +202,21 @@ def main():
         cidr_list = getCIDRv4Ranges()
 
         print(f" total Route ip list = {len(cidr_list)}      ")
-        #print(f" Rout ip list = {cidr_list}")
+       
         # Shuffling the IP list in order to test different ip in different ranges by random
         print("Shuffling the Route IPs...", end='')
         random.shuffle(cidr_list)
         random.shuffle(cidr_list)
         random.shuffle(cidr_list)
         # Preparation is done
-        #print(f" Rout ip list = {cidr_list}")
+       
         print("Done.")
         # Process CIDR list
         print("\nProcessing ...")
         try:
             with Pool(5) as p:
                 result = p.map(partial(processRegex, include_reg=include_regex, exclude_reg=exclude_regex), cidr_list)
-            #print(f" result_list1 = {result}")
             ip_list = list(itertools.chain(*result))
-            #print(f" result_list2 = {len(result)}")
         except:
             for cidr in cidr_list:
                 #print(f"Processing {cidr}...      \r", end='')
@@ -234,25 +231,14 @@ def main():
 
                 # Convert CIDR block to IP addresses and add them to IP List
                 ip_list = ip_list + processCIDR(cidr)       
-        #lst=0
-        #for cip in ip_list:
-        #    lst=lst+1
-            #print(f"total ip list = {len(cip)}")
-            #print(f"total ip list = {cip}")
-            #input("Continue...? ")
-
-        
 
         print(" total ip list = ", len(ip_list),"       \n"   )
         
-        
-        #print(f"Processing {cidrtest}...      \r", end='')
         # Shuffling the IP list in order to test different ip in different ranges by random
         print(f"\nShuffling the IPs...", end='')
         
         random.shuffle(ip_list)
         # Preparation is done
-        #print(f" total ip list = {ip_list}")
         print("Done.")
     except KeyboardInterrupt:
         # Print proper message and exit the script in case user pressed CTRL+C
@@ -275,13 +261,8 @@ def main():
         openssl_is_active = False
 
     # Start testing clean IPs
-    #_sys.__stdout__=sys.stdout
-    #print("\ntable strart...\n")
-    #print(f"\nsys.stdout= {type(sys.stdout.fileno)}  ")
-    #print(f"   _sys.__stdout__= {type(_sys.__stdout__)}")
     input("----continue---  ???? ")
     selectd_ip_list, total_test = curses.wrapper(startTest, ip_list=ip_list, config=config)
-    #selectd_ip_list, total_test = startTest(curses.initscr(), ip_list=ip_list, config=config)
     print(f"\n{total_test} of {len(ip_list)} matched IPs have peen tested.")
     print(f"{len(selectd_ip_list)} IP(s) found:")
     print("|---|---------------|--------|-----------|-------|-------|--------|----------|")
@@ -335,7 +316,6 @@ def startTest(stdscr: curses.window, ip_list: Pattern[AnyStr], config: configpar
     stdscr.clear()
     stdscr.refresh()
 
-    #stdscr.addstr(0, 0,f" Color = {curses.has_colors()} ")
     #0:black, 1:red, 2:green, 3:yellow, 4:blue, 5:magenta, 6:cyan, and 7:white(curses.COLOR_RED, curses.COLOR_BLACK)
     curses.start_color()
     curses.initscr()
@@ -381,7 +361,7 @@ def startTest(stdscr: curses.window, ip_list: Pattern[AnyStr], config: configpar
     stdscr.addstr(4+9, 0, "| # |       IP      |Ping(ms)|Port:(ms)  |Jit(ms)|Lat(ms)|Up(Mbps)|Down(Mbps)|")
     stdscr.addstr(5+9, 0, "|---|---------------|--------|-----------|-------|-------|--------|----------|")
     stdscr.addstr(6+9, 0, "|---|---------------|--------|-----------|-------|-------|--------|----------|")
-    #ipl=len(ip_list)
+
     # Loop through IP adresses to check their ping, latency and download/upload speed
     for ip in ip_list:
         col = 0
@@ -390,10 +370,8 @@ def startTest(stdscr: curses.window, ip_list: Pattern[AnyStr], config: configpar
 
         stdscr.move(0+9, 0)
         stdscr.clrtoeol()    # Clear the entire line
-        #stdscr.addstr(0+9, 0, f"Test #{test_no}: {ip}",curses.color_pair(3))
         stdscr.addstr(0+9, 0, f"Test {test_no} of {len(ip_list)}: #: ")
         stdscr.addstr(0+9,8+4+6, f" {ip}" ,curses.color_pair(3))
-        #stdscr.addstr(0+9,8+len(str(ipl))+len(str(test_no)), f" {ip}" ,curses.color_pair(3))
         stdscr.refresh()
 
         try:
@@ -731,12 +709,6 @@ def checkDomain(default_subdomain):
     return subdomain
 
 
-                
-#def validateCloudflareCredentials(email, api_key, zone_id):
-#def getCloudflareExistingRecords(email, api_key, zone_id, subdomain):
-#def deleteCloudflareExistingRecord(email: str, api_key: str, zone_id: str, record_id: str) -> None:
-#def addNewCloudflareRecord(email: str, api_key: str, zone_id: str, subdomain: str, ip: str) -> None:
-
 # Function to validate Cloudflare API credentials by making a GET request to the Cloudflare API with the provided credentials.
 def validateCloudflareCredentials(email, api_key, zone_id, subdomain):
     """
@@ -787,14 +759,6 @@ def getCloudflareExistingRecords(email, api_key, zone_id, subdomain ):
     }
     url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records?type=A&name={subdomain}"
 
-    #headers = {
-    #"Content-Type": "application/json",
-    #"Authorization": f"Bearer {api_key}"
-    #}
-    #url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/keys"
-    #url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/CleanDomainIPs"
-
-
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return json.loads(response.text)["result"]
@@ -824,7 +788,6 @@ def deleteCloudflareExistingRecord(email: str, api_key: str, zone_id: str, recor
         #url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/values/CleanDomainIPs"
         url=f"https://api.cloudflare.com/client/v4/accounts/{zone_id}/storage/kv/namespaces/{record_id}/values/CleanDomainIPs"
         headers = {"Content-Type": "application/json","Authorization": f"Bearer {api_key}"}
-        #response = requests.put(url,data='',headers=headers)
     
     response = requests.delete(url, headers=headers)
         
@@ -859,7 +822,7 @@ def addNewCloudflareRecord(email: str, api_key: str, zone_id: str, KV_key: str,s
         "ttl": 3600,
         "proxied": False
     }
-    #print(f"\nnew ip {ip} ")
+ 
     if subdomain == "n":
         exist_ip = ""
         #url=f"https://api.cloudflare.com/client/v4/accounts/{account_id}/storage/kv/namespaces/{namespace_id}/keys"
@@ -875,7 +838,7 @@ def addNewCloudflareRecord(email: str, api_key: str, zone_id: str, KV_key: str,s
             response = requests.put(url, data=data, headers=headers)
     else:
         response = requests.post(url, headers=headers, json=data)
-    #print(f"exist ip {exist_ip} ")
+  
     response.raise_for_status()
 
 
