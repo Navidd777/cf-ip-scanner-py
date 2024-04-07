@@ -72,8 +72,7 @@ def main():
     include_regex = ''
     exclude_regex = ''
     dfv='yes'
-    #stdscr.clear()
-    #stdscr.refresh()
+  
     print("Press CTRL+C to exit...\n")
     
     dfv = input(f"Go with default valuse?(yes/no) [{dfv}]? ") or dfv
@@ -219,7 +218,6 @@ def main():
             ip_list = list(itertools.chain(*result))
         except:
             for cidr in cidr_list:
-                #print(f"Processing {cidr}...      \r", end='')
                 cidrtest=cidr
                 # Ignore CIDR block if not matches with include regex
                 if include_regex and not include_regex.match(cidr):
@@ -297,7 +295,6 @@ def main():
                 print("Done.")
 
             print("Adding new A Record(s) for selected IP(s):")
-            #print(selected_ip_list)
             for el in selectd_ip_list:
                 print(el.ip, end='', flush=True)
                 addNewCloudflareRecord(email, api_key, zone_id, KV_key, subdomain, el.ip)
@@ -533,7 +530,7 @@ def getPing(ip, acceptable_ping):
     return ping
 
 
-
+# Check Port Ping and Calculate the timeout
 def portCheck(host,port,timeout=2):
     sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM) #presumably 
     sock.settimeout(timeout)
@@ -830,7 +827,7 @@ def addNewCloudflareRecord(email: str, api_key: str, zone_id: str, KV_key: str,s
         headers = {"Content-Type": "text/plain","Authorization": f"Bearer {api_key}"}
         result = requests.get(url,headers=headers)
         if result.status_code ==200 : exist_ip = result.text
-        if not ip in exist_ip:
+        if not ip in exist_ip: #check for duplicated IP (only for CludeFlare account)
             if exist_ip=="":
                  data = ip
             else:
