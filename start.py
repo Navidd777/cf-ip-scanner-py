@@ -59,7 +59,7 @@ def main():
     default_api_key = config.get('DEFAULT', 'api_key', fallback='')
     default_KV_key = config.get('DEFAULT', 'KV_key', fallback='')
     default_subdomain = config.get('DEFAULT', 'subdomain', fallback='')
-
+    default_key_values= config.get('DEFAULT', 'key_values', fallback='')
     # Define global variable
     global print_ping_error_message
     global openssl_is_active
@@ -133,26 +133,22 @@ def main():
 
         # Prompt the user for whether they want to upload the result to their Cloudflare subdomain
         upload_results = input(f"Do you want to upload the result to your Cloudflare account/subdomain (yes/no) [{default_upload_results}]? ") or default_upload_results
-
+        key_values="n"
         # Code block to execute if upload_results is 'y' or 'yes'
         if upload_results.lower() in ["y", "yes"]:
             delete_existing = input(f"Do you want to delete extisting records of given Cloudflare account/subdomain before uploading (yes/no) [{default_delete_existing}]? ") or default_delete_existing
-            subdomain =checkDomain(default_subdomain)
-            if subdomain== "n" :
-                zone_id = input(f"Cloudflare account ID [{default_zone_id}]: ") or default_zone_id
-                api_key = input(f"Cloudflare NameSpace API Token key [{default_api_key}]: ") or default_api_key
-                KV_key = input(f"Cloudflare KV Namespace key [{default_KV_key}]: ") or default_KV_key
-            else:
-                email = input(f"Cloudflare email [{default_email}]: ") or default_email
-                zone_id = input(f"Cloudflare zone ID [{default_zone_id}]: ") or default_zone_id
-                api_key = input(f"Cloudflare Global API Key [{default_api_key}]: ") or default_api_key
-
+            if default_zone_id!="" :                         
+                print("Sub Domain Key Values....")
+                print (f"    Sub Domain : {default_subdomain}")
+                print (f"    Email  : {email}")
+                print (f"    Zone ID: {zone_id}")
+                print (f"    Api Key: {api_key}")
+                print (f"    KV Key : {KV_key}")
+                key_values = input(f"Do you want to change Key Valuse (yes/no) [{default_key_values}]? ") or default_key_values
+            else: 
+                key_values="y"
             # Prompt user to enter subdomain to modify
-            
-
-            # Check if provided credentials are correct and retry if they are not
-            while not validateCloudflareCredentials(email, api_key, zone_id, subdomain):
-                print("Invalid cloudflare credentials, please try again.")
+            if key_values.lower() in ["y", "yes"]:
                 subdomain =checkDomain(default_subdomain)
                 if subdomain== "n" :
                     zone_id = input(f"Cloudflare account ID [{default_zone_id}]: ") or default_zone_id
@@ -162,6 +158,27 @@ def main():
                     email = input(f"Cloudflare email [{default_email}]: ") or default_email
                     zone_id = input(f"Cloudflare zone ID [{default_zone_id}]: ") or default_zone_id
                     api_key = input(f"Cloudflare Global API Key [{default_api_key}]: ") or default_api_key
+            
+            validation=False
+            # Check if provided credentials are correct and retry if they are not
+            while not validation: 
+                print ("Verifying Domain parameters.... ",end="")
+                validation=validateCloudflareCredentials(email, api_key, zone_id, subdomain)
+                if validation:
+                    print("all ok....Done....")
+                else:  
+                    # Check if provided credentials are correct and retry if they are not
+                    while not validateCloudflareCredentials(email, api_key, zone_id, subdomain):
+                        print("Invalid cloudflare credentials, please try again.")
+                        subdomain =checkDomain(default_subdomain)
+                        if subdomain== "n" :
+                            zone_id = input(f"Cloudflare account ID [{default_zone_id}]: ") or default_zone_id
+                            api_key = input(f"Cloudflare NameSpace API Token key [{default_api_key}]: ") or default_api_key
+                            KV_key = input(f"Cloudflare KV Namespace key [{default_KV_key}]: ") or default_KV_key
+                        else:
+                            email = input(f"Cloudflare email [{default_email}]: ") or default_email
+                            zone_id = input(f"Cloudflare zone ID [{default_zone_id}]: ") or default_zone_id
+                            api_key = input(f"Cloudflare Global API Key [{default_api_key}]: ") or default_api_key
              
 
 
@@ -182,7 +199,8 @@ def main():
             'zone_id': zone_id,
             'api_key': api_key,
             'KV_key': KV_key,
-            'subdomain': subdomain
+            'subdomain': subdomain,
+            'key_values':key_values
         }
 
         # Saving the configuration info to config file for further use
@@ -200,7 +218,7 @@ def main():
         # Get IPv4 CIDR blocks of Cloudflare Network from related function
         cidr_list = getCIDRv4Ranges()
 
-        print(f" total Route ip list = {len(cidr_list)}      ")
+        print(f"total Route ip list = {len(cidr_list)}      ")
        
         # Shuffling the IP list in order to test different ip in different ranges by random
         print("Shuffling the Route IPs...", end='')
@@ -211,7 +229,7 @@ def main():
        
         print("Done.")
         # Process CIDR list
-        print("\nProcessing ...")
+        print("\nProcessing ...", end='')
         try:
             with Pool(5) as p:
                 result = p.map(partial(processRegex, include_reg=include_regex, exclude_reg=exclude_regex), cidr_list)
@@ -230,14 +248,14 @@ def main():
                 # Convert CIDR block to IP addresses and add them to IP List
                 ip_list = ip_list + processCIDR(cidr)       
 
-        print(" total ip list = ", len(ip_list),"       \n"   )
+        print(f"total ip list =  {len(ip_list)}                       \n"  )
         
         # Shuffling the IP list in order to test different ip in different ranges by random
-        print(f"\nShuffling the IPs...", end='')
+        print(f"Shuffling the IPs...", end='')
         
         random.shuffle(ip_list)
         # Preparation is done
-        print("Done.")
+        print("Done.\n\n")
     except KeyboardInterrupt:
         # Print proper message and exit the script in case user pressed CTRL+C
         print("\n\nRequest cancelled by user!")
@@ -258,25 +276,30 @@ def main():
         print("OpenSSL is not installed! You mast install it to your system and try again.")
         openssl_is_active = False
 
-    # Start testing clean IPs
-    input("----continue---  ???? ")
-    selectd_ip_list, total_test = curses.wrapper(startTest, ip_list=ip_list, config=config)
-    print(f"\n{total_test} of {len(ip_list)} matched IPs have peen tested.")
-    print(f"{len(selectd_ip_list)} IP(s) found:")
-    print("|---|---------------|--------|-----------|-------|-------|--------|----------|")
-    print("| # |       IP      |Ping(ms)|Port:(ms)  |Jit(ms)|Lat(ms)|Up(Mbps)|Down(Mbps)|")
-    print("|---|---------------|--------|-----------|-------|-------|--------|----------|")
+    try:
+        # Start testing clean IPs
+        input("----continue---  ???? ")
+        selectd_ip_list, total_test = curses.wrapper(startTest, ip_list=ip_list, config=config)
+        print(f"\n{total_test} of {len(ip_list)} matched IPs have peen tested.")
+        print(f"{len(selectd_ip_list)} IP(s) found:")
+        print("|---|---------------|--------|-----------|-------|-------|--------|----------|")
+        print("| # |       IP      |Ping(ms)|Port:(ms)  |Jit(ms)|Lat(ms)|Up(Mbps)|Down(Mbps)|")
+        print("|---|---------------|--------|-----------|-------|-------|--------|----------|")
 
-    successful_no = 0
-    for el in selectd_ip_list:
-        successful_no = successful_no + 1
-        # Print out the IP and related info as well as ping, latency and download/upload speed
-        print(f"\r|{successful_no:3d}|{el.ip:15s}|{el.ping:7d} |443:({el.pport:4d}) |{el.jitter:6d} |{el.latency:6d} |{el.upload:7.2f} |{el.download:9.2f} |")
+        successful_no = 0
+        for el in selectd_ip_list:
+            successful_no+=1
+            # Print out the IP and related info as well as ping, latency and download/upload speed
+            print(f"\r|{successful_no:3d}|{el.ip:15s}|{el.ping:7d} |443:({el.pport:4d}) |{el.jitter:6d} |{el.latency:6d} |{el.upload:7.2f} |{el.download:9.2f} |")
 
-    print("|---|---------------|--------|-----------|-------|-------|--------|----------|\n")
+        print("|---|---------------|--------|-----------|-------|-------|--------|----------|\n")
 
-    print("IP list successfuly exported to `selected-ips.csv` file.\n")
-
+        print("IP list successfuly exported to `selected-ips.csv` file.\n")
+    except KeyboardInterrupt:
+        # Print proper message and exit the script in case user pressed CTRL+C
+        print("\n\nRequest cancelled by user!")
+        sys.exit(0)   
+    
     # Updating relevant subdomain with clean IP adresses
     if upload_results.lower() in ["y", "yes"]:
         try:
@@ -304,7 +327,7 @@ def main():
             print("Failed to update Cloudflare subdomain!")
             print(e)
 
-    print("Done.\n")
+    print("-----End of Function-----\n")
 
 
 def startTest(stdscr: curses.window, ip_list: Pattern[AnyStr], config: configparser.ConfigParser):
@@ -701,7 +724,7 @@ def checkDomain(default_subdomain):
     while not re.match(r"^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,}$", subdomain) and not (subdomain =="n") :
         # If subdomain is invalid, prompt user to try again
         if subdomain!="empty" : print("Invalid subdomain, please try again.")
-        subdomain = input(f"Subdomain to modify (i.e ip.my-domain.com) [{default_subdomain}] or ""n"" for cloudflare account  : ") or default_subdomain
+        subdomain = input(f"Subdomain to modify (i.e ip.my-domain.com) [{default_subdomain}] or 'n' for cloudflare account  : ") or default_subdomain
         if subdomain.lower() in ["n", "no"]: subdomain="n"
     return subdomain
 
@@ -827,12 +850,11 @@ def addNewCloudflareRecord(email: str, api_key: str, zone_id: str, KV_key: str,s
         headers = {"Content-Type": "text/plain","Authorization": f"Bearer {api_key}"}
         result = requests.get(url,headers=headers)
         if result.status_code ==200 : exist_ip = result.text
-        if not ip in exist_ip: #check for duplicated IP (only for CludeFlare account)
-            if exist_ip=="":
-                 data = ip
-            else:
-                 data = exist_ip+"\n"+ip
-            response = requests.put(url, data=data, headers=headers)
+        if exist_ip=="":
+            data = ip
+        else:
+            data = exist_ip+"\n"+ip
+        response = requests.put(url, data=data, headers=headers)
     else:
         response = requests.post(url, headers=headers, json=data)
   
